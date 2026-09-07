@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Tablet</title>
+<style>
+:root{
+  --navy:#1B3A63; --blue-accent:#2E6FB5; --bg:#D5D8DC; --card:#fff;
+  --text:#1F2937; --muted:#6B7280; --border:#E2E5E9;
+  --good:#1E8E5A; --warn:#C0392B; --amber:#B7791F;
+  --green-dim:#E7F5EC; --red-dim:#FBEAEA; --amber-dim:#F6ECD9;
+  --panel2:#F7F9FB; --mono:Consolas,"SFMono-Regular",Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI","Malgun Gothic",Arial,sans-serif;background:var(--bg);color:var(--text);padding:24px;padding-top:4.76mm}
+.wrap{max-width:1180px;margin:0 auto}
+header{background:var(--navy);color:#fff;border-radius:10px;padding:10.5px 26px;margin-bottom:4.76mm;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:19px;letter-spacing:.3px}
+header .sub{font-size:12px;color:#B9C7D9;margin-top:4px}
+.actions{display:flex;gap:10px}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;padding:10px 16px;font-size:12px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--blue-accent);color:#fff}.btn-primary:hover{background:#255a94}
+.btn-export{background:#1E8E5A;color:#fff}.btn-export:hover{background:#166b44}
+.btn-export:disabled{opacity:.6;cursor:default}
+.btn-del{background:#F5E4E2;color:var(--warn);width:24px;height:24px;padding:0;font-size:13px;font-weight:700;line-height:1;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.btn-del:hover{background:#eecdc9}
+.btn-del:disabled{opacity:.5;cursor:default}
+.btn-plain{background:#EEF1F4;color:var(--navy)}.btn-plain:hover{background:#E2E7EC}
+.tab-bar{display:flex;align-items:center;gap:8px;margin-bottom:4.76mm}
+.tab-btn{padding:9px 20px;background:#EEF1F4;color:var(--navy);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.tab-btn.active{background:var(--navy);color:#fff}
+.count{display:inline-block;margin-left:8px;font-size:12px;background:rgba(0,0,0,.08);border-radius:10px;padding:1px 7px}
+.tab-btn.active .count{background:rgba(255,255,255,.22)}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card,.summary-card{background:var(--card);border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2,.summary-card h2{margin:0 0 14px;font-size:14px;color:var(--navy);text-transform:uppercase;letter-spacing:.4px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px;font-weight:600}
+input[type=text],input[type=number],select,textarea{
+ width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;
+ font-size:12px;font-family:inherit;color:var(--text);background:#fff
+}
+input:focus,select:focus,textarea:focus{outline:2px solid #BBD3EC;border-color:var(--blue-accent)}
+.dropzone{border:2px dashed #A9BBD1;border-radius:8px;padding:16px 14px;text-align:center;color:var(--muted);font-size:12px;background:#F7F9FB;cursor:pointer}
+.dropzone.drag{border-color:var(--blue-accent);background:#EAF2FA}
+.dropzone img{max-width:100%;max-height:145px;border-radius:6px;margin-bottom:8px}
+.dz-actions{display:flex;gap:8px;justify-content:center;margin:8px 0 2px;flex-wrap:wrap}
+.dz-btn{background:#fff;color:var(--blue-accent);border:1px solid var(--blue-accent);padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600}
+.dz-btn:hover{background:#EAF2FA}
+.table-wrap{overflow:auto;max-height:600px;position:relative}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+th{background:#DCEAF7;color:var(--navy);text-align:left;padding:9px 10px;font-weight:700;border-bottom:2px solid #B9CFE8;position:sticky;top:0;z-index:2}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:#F7F9FB}
+.empty-row td{text-align:center;color:var(--muted);padding:30px;font-style:italic}
+.photo-thumb{width:68px;height:23px;object-fit:contain;border-radius:6px;border:1px solid var(--border);background:#F7F9FB;cursor:pointer}
+.photo-empty{width:68px;height:23px;border:1px dashed var(--border);border-radius:6px;background:#F7F9FB;display:flex;align-items:center;justify-content:center;color:#A0A8B3;font-size:8px}
+#inventoryBody td{padding:4px 10px;text-align:center;vertical-align:middle;height:30px}
+.chip{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;background:#EAF2FA;color:var(--blue-accent)}
+.category-chip{background:#EEF1F4;color:var(--navy)}
+.top-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap}
+.top-row .field{flex:1;min-width:130px}.top-row label{margin-top:0}
+.summary-section{display:none}.summary-pair{display:flex;gap:18px;flex-wrap:wrap}
+.summary-card{flex:1 1 300px}.summary-number{font-size:34px;font-weight:700;color:var(--navy)}
+.chart-legend-row{display:flex;align-items:center;gap:6px;font-size:11px;margin:3px 0}
+.chart-legend-dot{width:10px;height:10px;border-radius:2px;flex:0 0 auto}
+.chart-bar-row{margin-bottom:8px}
+.chart-bar-track{background:#EEF1F4;border-radius:4px;height:10px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:4px}
+.loc-cell{display:flex;align-items:center;gap:6px}
+.loc-edit-btn{background:#EEF1F4;color:var(--navy);border:none;border-radius:5px;width:20px;height:20px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
+.loc-edit-btn:hover{background:#E2E7EC}
+.loc-updated{font-size:10px;color:var(--muted);margin-top:2px}
+.loc-edit-input{width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;box-sizing:border-box}
+.loc-edit-actions{display:flex;gap:4px;margin-top:4px}
+.loc-btn-sm{border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer}
+.loc-save-btn{background:var(--navy);color:#fff}
+.loc-cancel-btn{background:#EEF1F4;color:var(--navy)}
+.stat-list{margin-top:12px}.stat-item{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:7px 0;font-size:12px}
+.lock-notice{background:var(--amber-dim);color:var(--amber);border-radius:6px;padding:8px 10px;font-size:12px;font-weight:600;margin-bottom:12px;display:none}
+  .btn-signoff{background:var(--blue-accent);color:#fff;border:1px solid var(--blue-accent);display:inline-flex;align-items:center;gap:6px;}
+  .btn-signoff:hover{background:#255a94;}
+  .btn-signoff:disabled{opacity:.5;cursor:default;background:#B9C7D9;border-color:#B9C7D9;color:#fff;}
+  .btn-signoff svg{width:13px;height:13px;flex:0 0 auto;}
+  .btn-confirm{background:var(--blue-accent);color:#fff;border:1px solid var(--blue-accent);}
+  .btn-confirm:hover{background:#255a94;}
+  .btn-approve{background:var(--green);color:#fff;border:1px solid var(--green);}
+  .btn-approve:hover{background:#166b45;}
+  .btn-notsign{background:var(--red);color:#fff;border:1px solid var(--red);}
+  .btn-notsign:hover{background:#9c2e21;}
+  .btn-cancel-plain{background:none;border:none;color:#B0B4BA;text-decoration:underline;padding:7px 10px;font-size:12px;font-weight:600;}
+  .btn-cancel-plain:hover{color:#8A8F96;}
+  .btn-unlock{background:#F1F2F4;color:var(--text);border:1px solid #E2E5E9;border-radius:999px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .btn-unlock:hover{background:#E7E9EC;}
+  /* ===== Sign Status / Approval panel (ported from sign-status-approval-panel skill) ===== */
+  .lock-notice{
+    background:var(--amber-dim);color:var(--amber);border-radius:6px;padding:8px 10px;
+    font-size:12px;font-weight:600;margin-bottom:12px;
+  }
+  input:disabled,select:disabled,textarea:disabled{background:#F2F4F6;color:var(--muted);cursor:default;}
+  .dropzone.locked{opacity:.6;}
+
+  .status-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.03em;}
+  .status-pending{background:var(--amber-dim);color:var(--amber);}
+  .status-approved{background:var(--green-dim);color:var(--green);}
+  .status-rejected{background:var(--red-dim);color:var(--red);}
+
+  .approval-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .approval-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .sig-stamp{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;}
+  .sig-stamp img{height:42px;}
+  .sig-meta{font-size:12px;color:var(--sub);line-height:1.5;font-family:var(--mono);}
+  .sig-meta b{color:var(--text);font-family:inherit;}
+
+  .confirm-box{display:flex;align-items:center;gap:10px;background:var(--amber-dim);border:1px solid #f0d19c;border-radius:8px;padding:8px 12px;flex-wrap:wrap;}
+  .confirm-box span{font-size:12px;color:var(--amber);font-weight:600;}
+  .confirm-box input[type=password]{width:130px;}
+  .confirm-box.reject-box{background:var(--red-dim);border-color:#f3c6c2;flex-direction:column;align-items:stretch;gap:8px;}
+  .confirm-box.reject-box span{color:var(--red);}
+  .confirm-box textarea{width:100%;min-height:56px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;color:var(--text);resize:vertical;}
+  .reject-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pw-error{font-size:12px;color:var(--red);font-weight:600;}
+  .approval-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sign-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.show{display:flex}.modal-box{background:#fff;border-radius:10px;padding:20px;max-width:90vw;max-height:90vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal-box img{display:block;border-radius:6px;max-width:none;max-height:none}
+.delete-confirm-box{padding:26px 28px;min-width:320px;max-width:400px}
+.delete-confirm-text{margin:0 0 22px;font-size:14px;color:var(--text);font-weight:500}
+.delete-confirm-actions{display:flex;justify-content:flex-end;gap:10px}
+.btn-confirm-no{background:#EEF1F4;color:var(--navy);border:none;border-radius:7px;padding:9px 20px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-confirm-no:hover{background:#E2E7EC}
+.btn-confirm-yes{background:var(--warn);color:#fff;border:none;border-radius:7px;padding:9px 20px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-confirm-yes:hover{background:#9c2e21}
+footer{margin-top:16px;text-align:center;font-size:12px;color:#8592A3}
+.small-note{font-size:11px;color:#94A3B8;margin-top:5px}
+
+/* Packing Chop Sign Status styling */
+.lock-notice{background:var(--amber-dim);color:var(--amber);border-radius:6px;padding:8px 10px;font-size:12px;font-weight:600;margin-bottom:12px;}
+input:disabled,select:disabled,textarea:disabled{background:#F2F4F6;color:var(--muted);cursor:default;}
+.dropzone.locked{opacity:.6;}
+.status-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.03em;}
+.status-pending{background:var(--amber-dim);color:var(--amber);}.status-approved{background:var(--green-dim);color:var(--good);}.status-rejected{background:var(--red-dim);color:var(--warn);}
+.approval-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}.approval-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sig-stamp{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;}.sig-stamp img{height:42px;}
+.sig-meta{font-size:12px;color:var(--muted);line-height:1.5;font-family:var(--mono);}.sig-meta b{color:var(--text);font-family:inherit;}
+.confirm-box{display:flex;align-items:center;gap:10px;background:var(--amber-dim);border:1px solid #f0d19c;border-radius:8px;padding:8px 12px;flex-wrap:wrap;}.confirm-box span{font-size:12px;color:var(--amber);font-weight:600;}.confirm-box input[type=password]{width:130px;}
+.confirm-box.reject-box{background:var(--red-dim);border-color:#f3c6c2;flex-direction:column;align-items:stretch;gap:8px;}.confirm-box.reject-box span{color:var(--warn);}.confirm-box textarea{width:100%;min-height:56px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;color:var(--text);resize:vertical;}
+.reject-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.pw-error{font-size:12px;color:var(--warn);font-weight:600;}.approval-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sig-stamp{align-items:flex-start;}
+.sig-meta{display:flex;flex-direction:column;gap:2px;}
+.sig-comment-input{border:1px solid transparent;background:transparent;border-radius:4px;padding:2px 4px;margin:0 0 0 -4px;font-size:12px;font-family:var(--mono);color:var(--muted);width:220px}
+.sig-comment-input:hover{border-color:var(--border);background:#fff}
+.sig-comment-input:focus{outline:2px solid #BBD3EC;border-color:var(--blue-accent);background:#fff;color:var(--text)}
+.btn-nextsignoff{background:var(--blue-accent);color:#fff;border:1px solid var(--blue-accent);border-radius:999px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.btn-nextsignoff:hover{background:#255a94;}
+.btn-signoff{background:var(--blue-accent);color:#fff;border:1px solid var(--blue-accent);display:inline-flex;align-items:center;gap:6px;}.btn-signoff:hover{background:#255a94;}.btn-signoff:disabled{opacity:.5;cursor:default;background:#B9C7D9;border-color:#B9C7D9;color:#fff;}.btn-signoff svg{width:13px;height:13px;flex:0 0 auto;}
+.btn-confirm{background:var(--blue-accent);color:#fff;border:1px solid var(--blue-accent);}.btn-approve{background:var(--good);color:#fff;border:1px solid var(--good);}.btn-notsign{background:var(--warn);color:#fff;border:1px solid var(--warn);}.btn-cancel-plain{background:none;border:none;color:#B0B4BA;text-decoration:underline;padding:7px 10px;font-size:12px;font-weight:600;}.btn-unlock{background:#F1F2F4;color:var(--text);border:1px solid #E2E5E9;border-radius:999px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+
+/* QA Dummy input sizing: all six fields are equal and 2/3 of photo width */
+.card:first-child input[type="text"], .card:first-child select { width:56.6667%; }
+
+
+/* Right-side filters */
+.search-wrap{position:relative;width:100%}
+.search-wrap input{padding-left:34px!important}
+.search-icon{
+  position:absolute;left:11px;top:50%;transform:translateY(-52%);
+  color:#7B8794;font-size:19px;line-height:1;pointer-events:none;font-weight:600
+}
+#filterBuyer,#filterCategory,#filterSize{width:100%}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#btnRefresh.spinning{pointer-events:none;opacity:.75}
+#btnRefresh .refresh-icon{display:inline-block}
+#btnRefresh.spinning .refresh-icon{animation:qa-refresh-spin .5s linear}
+.synced-badge{font-size:12px;font-weight:700;color:var(--good);opacity:0;transition:opacity .25s;display:inline-flex;align-items:center;gap:4px}
+.synced-badge.show{opacity:1}
+@keyframes qa-refresh-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+
+.tablet-entry-card{padding:20px}.section-heading{margin:0 0 14px!important;font-size:14px!important;font-weight:600;color:#4B5563;text-transform:none}.card>h2{font-size:14px!important;font-weight:600;color:#4B5563;text-transform:none;margin:0 0 14px!important}.photo-panel h2,.info-panel h2{font-size:14px!important;font-weight:600;color:#4B5563;text-transform:none;margin:0 0 14px!important}.tablet-layout{display:grid;grid-template-columns:38% 62%;gap:20px;align-items:start}.tablet-entry-grid{display:block}.left-stack{display:flex;flex-direction:column;gap:18px}.right-stack{display:flex;flex-direction:column;gap:18px}.left-stack .info-panel,.right-stack .card{margin:0!important}.photo-panel,.info-panel{background:#F7F9FB;border:1px solid var(--border);border-radius:8px;padding:16px}.photo-panel h2,.info-panel h2{margin-bottom:14px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.form-grid .wide{grid-column:1/-1}.form-grid label{margin-top:10px}.log-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px;align-items:end}.log-form button{margin-top:12px;width:100%}.in-chip{background:#E7F5EC;color:#1E8E5A}.out-chip{background:#F6ECD9;color:#B7791F}.tablet-entry-card .dropzone{min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center}.tablet-entry-card .dropzone img{max-height:250px}.field{flex:1;min-width:150px}.search-field{min-width:220px}@media(max-width:900px){.tablet-layout{grid-template-columns:1fr}.log-form{grid-template-columns:1fr 1fr}}
+
+/* ===== Tablet Info layout adjustments ===== */
+.tablet-layout{grid-template-columns:28.5% 71.5%;gap:18px;align-items:stretch}
+.left-stack{height:100%}
+.left-stack .tablet-entry-card{height:100%;display:flex;flex-direction:column}
+.tablet-entry-card{padding:20px}
+.tablet-info-combined{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+.tablet-info-combined .photo-panel{padding:10px}
+.tablet-info-combined .photo-panel .dropzone{
+  min-height:0;height:90px;padding:8px 10px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+}
+.tablet-info-combined .dropzone img{max-height:58px;margin-bottom:3px}
+.tablet-info-combined .dz-actions{margin:3px 0 0}
+.tablet-info-combined .info-panel{flex:1;padding:12px}
+.tablet-info-combined .form-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}
+.tablet-info-combined .form-grid label{margin-top:7px;margin-bottom:4px}
+.tablet-info-combined input[type=text],
+.tablet-info-combined select{padding:7px 9px}
+.right-stack{height:100%;min-width:0}
+.right-stack>.card{margin-top:0!important;flex:1 1 0;display:flex;flex-direction:column;min-height:0;min-width:0}
+.right-stack .table-wrap{flex:1;min-height:0;max-height:none;min-width:0}
+@media(max-width:900px){
+  .tablet-layout{grid-template-columns:1fr}
+  .left-stack,.right-stack{height:auto}
+  .right-stack>.card{flex:0 0 auto}
+  .right-stack .table-wrap{max-height:400px}
+}
+
+
+/* ===== User requested Tablet Info layout ===== */
+.tablet-info-combined .photo-panel .dropzone{
+  height:90px;
+}
+.tablet-info-combined .dz-actions{
+  flex-wrap:nowrap;
+  width:100%;
+  gap:6px;
+}
+.tablet-info-combined .dz-btn{
+  padding:6px 8px;
+  font-size:11px;
+  white-space:nowrap;
+  flex:1 1 0;
+  min-width:0;
+}
+
+/* Tablet Info field layout */
+.tablet-info-combined .info-panel .form-grid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:0 18px;
+}
+.tablet-info-combined .info-panel .form-grid > div:nth-child(1){grid-column:1;grid-row:1;} /* Team */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(2){grid-column:2;grid-row:1;} /* Code */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(3){grid-column:1;grid-row:2;} /* Brand */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(4){grid-column:2;grid-row:2;} /* Model */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(5){grid-column:1;grid-row:3;} /* Purpose */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(6){grid-column:2;grid-row:3;} /* Status */
+.tablet-info-combined .info-panel .form-grid > div:nth-child(7){grid-column:1 / -1;grid-row:4;} /* Location */
+
+.tablet-info-combined .info-panel .form-grid > div:nth-child(1) select,
+.tablet-info-combined .info-panel .form-grid > div:nth-child(3) select,
+.tablet-info-combined .info-panel .form-grid > div:nth-child(4) select,
+.tablet-info-combined .info-panel .form-grid > div:nth-child(5) select,
+.tablet-info-combined .info-panel .form-grid > div:nth-child(7) input{
+  width:100%;
+}
+
+
+/* Tablet Info dropdown placeholders */
+.tablet-info-combined .info-panel select.placeholder{color:#B8C0CA;}
+.tablet-info-combined .info-panel select.placeholder option{color:#B8C0CA;}
+.tablet-info-combined .info-panel select:not(.placeholder) option{color:var(--text);}
+
+/* ===== Final Tablet Info: one field per row ===== */
+.tablet-info-combined .info-panel .form-grid{grid-template-columns:1fr;gap:0}
+.tablet-info-combined .info-panel .form-grid > div{grid-column:1!important;grid-row:auto!important}
+.tablet-info-combined .info-panel .form-grid > div select,
+.tablet-info-combined .info-panel .form-grid > div input{width:100%;max-width:100%;min-width:0}
+
+/* Final Tablet Info sizing: fields fill their own grid cell, never overlap */
+.tablet-info-combined .form-grid > div{min-width:0}
+.tablet-info-combined input[type=text],
+.tablet-info-combined select{width:100%;max-width:100%;min-width:0}
+
+
+/* ===== QA Tablet In-Out Log matrix ===== */
+.log-header-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.log-header-row h2{margin:0!important;text-transform:none;color:#4B5563;font-size:14px;font-weight:600;letter-spacing:normal}
+.date-column-control{display:flex;align-items:center;gap:8px}
+.date-column-control input[type=date]{width:145px;padding:7px 9px;font-size:12px}
+.date-column-control button{padding:7px 12px;white-space:nowrap}
+.log-grid-wrap{max-height:500px;overflow:auto;border:1px solid var(--border);border-radius:6px;min-width:0}
+.log-grid-table{min-width:0;width:auto;table-layout:fixed}
+.log-grid-table th,.log-grid-table td{white-space:nowrap;overflow:hidden}
+.log-grid-table th:first-child,.log-grid-table td:first-child{position:sticky;left:0;z-index:3;background:#fff}
+.log-grid-table th:nth-child(2),.log-grid-table td:nth-child(2){position:sticky;left:43px;z-index:3;background:#fff}
+.log-grid-table th:nth-child(3),.log-grid-table td:nth-child(3){position:sticky;left:116px;z-index:3;background:#fff}
+.log-grid-table th:nth-child(4),.log-grid-table td:nth-child(4){position:sticky;left:182px;z-index:3;background:#fff}
+.log-grid-table th:nth-child(5),.log-grid-table td:nth-child(5){position:sticky;left:248px;z-index:3;background:#fff}
+.log-grid-table thead th{position:sticky;top:0;z-index:5;background:#DCEAF7}
+.log-grid-table thead th:first-child,.log-grid-table thead th:nth-child(2),.log-grid-table thead th:nth-child(3),.log-grid-table thead th:nth-child(4),.log-grid-table thead th:nth-child(5){z-index:7;background:#DCEAF7}
+.log-grid-table th{width:66px}
+.log-grid-table th:nth-child(1){width:43px}
+.log-grid-table th:nth-child(2){width:73px}
+.log-grid-table th:nth-child(3){width:66px}
+.log-grid-table th:nth-child(4){width:66px}
+.log-grid-table th:nth-child(5){width:90px}
+.log-grid-table td.grid-cell{padding:4px 6px}
+.inventory-table th,.log-grid-table th{text-align:center;vertical-align:middle}
+.log-grid-table td{text-align:center;vertical-align:middle;height:2px;padding:4px 6px}
+.log-cell-input{width:100%;min-width:0;border:1px solid transparent;background:transparent;border-radius:4px;padding:6px 4px;font-size:12px;font-family:inherit;color:var(--text);text-align:center}
+.log-reason-select{width:100%;min-width:0;border:1px solid transparent;background:transparent;border-radius:4px;padding:6px 4px;font-size:12px;font-family:inherit;color:var(--text);cursor:pointer;text-align:center;text-align-last:center}
+.log-reason-select:hover{border-color:var(--border);background:#fff}
+.log-reason-select:focus{outline:2px solid #BBD3EC;border-color:var(--blue-accent);background:#fff}
+.log-reason-select:disabled{color:var(--text);opacity:1;-webkit-text-fill-color:var(--text);cursor:default;background:transparent;appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:none}
+.log-cell-input:hover{border-color:var(--border);background:#fff}
+.log-cell-input:focus{outline:2px solid #BBD3EC;border-color:var(--blue-accent);background:#fff}
+.log-grid-table td.code-cell{font-weight:600}
+.log-grid-table tr:hover td.grid-cell{background:#F7F9FB}
+@media(max-width:900px){.date-column-control{width:100%}.date-column-control input[type=date]{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>QA TABLET</h1>
+    <div class="sub"></div>
+  </div>
+  <div class="actions">
+    <button class="btn-export" id="btnExport">⭳ Export Excel</button>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="tab-btn active" data-section="SUMMARY">Detail <span class="count" id="totalCount">0</span></div>
+  <div class="tab-btn" data-section="DETAIL">Summary</div>
+  <span class="synced-badge" id="syncedBadge" style="margin-left:auto">✓ Synced</span>
+  <button class="btn-export" id="btnRefresh" style="margin-left:12px"><span class="refresh-icon">⟳</span> Refresh</button>
+</div>
+
+<div id="sectionSummary">
+  <div class="tablet-layout">
+    <div class="left-stack">
+      <div class="card tablet-entry-card">
+        <h2 class="section-heading">Add New Tablet</h2>
+        <div class="tablet-info-combined">
+          <div class="photo-panel">
+            <div class="dropzone" id="dropzone">
+              <div id="dzPreview"></div>
+              <div class="dz-actions">
+                <button type="button" class="dz-btn" id="btnTakePhoto">📷 Take Photo</button>
+                <button type="button" class="dz-btn" id="btnUploadFile">🖼 Upload from Device</button>
+              </div>
+              <input type="file" id="fileInput" accept="image/*" style="display:none">
+              <input type="file" id="fileCamera" accept="image/*" capture="environment" style="display:none">
+            </div>
+          </div>
+          <div class="info-panel">
+            <div class="form-grid">
+              <div><label>Team</label><input type="text" id="fTeam" placeholder="Auto-detected from photo"></div>
+              <div><label>Code</label><input type="text" id="fCode" placeholder="Auto-generated"></div>
+              <div><label>Brand</label><select id="fBrand"><option value="">Select</option><option>Samsung</option><option>Lenovo</option></select></div>
+              <div><label>Model</label><select id="fModel"><option value="">Select</option><option>Galaxy Tab A (With S Pen / No Case)</option><option>Galaxy Tab A9 (No Pen / No Case)</option><option>Tab M11 (With Pen / With Case)</option></select></div>
+              <div><label>Purpose</label><select id="fPurpose"><option value="">Select</option><option>-</option><option>Carter's Final Insp</option><option>Target Final Insp</option><option>AEO Final Insp</option><option>QA MES Real-Time Insp</option></select></div>
+            </div>
+            <button class="btn-primary" id="btnAdd" style="width:100%;margin-top:16px">+ Add to list</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-stack">
+      <div class="card" style="margin-top:18px">
+    <h2>Inventory Detail</h2>
+    <div class="table-wrap"><table class="inventory-table"><thead><tr>
+      <th style="width:43px">No.</th><th style="width:87px">Photo</th><th style="width:80px">Team</th><th style="width:82px">Code</th><th style="width:66px">Brand</th><th style="width:230px">Model</th><th style="width:241px">Purpose</th><th style="width:60px"></th>
+    </tr></thead><tbody id="inventoryBody"></tbody></table></div>
+  </div>
+      <div class="card" style="margin-top:18px">
+    <div class="log-header-row">
+      <h2>In-Out Log</h2>
+      <div class="date-column-control">
+        <input type="date" id="logColumnDate" aria-label="Select date to add">
+        <button class="btn-primary" id="btnAddDate">Insert</button>
+      </div>
+    </div>
+    <div class="table-wrap log-grid-wrap"><table class="log-grid-table"><thead id="logHead"></thead><tbody id="logBody"></tbody></table></div>
+  </div>
+    </div>
+  </div>
+
+  <div class="card" id="signPanel" style="margin-top:18px"><h2>Sign Status</h2><div class="approval-row" id="approvalRow"></div></div>
+
+</div>
+
+<div id="sectionDetail" style="display:none">
+  <div class="card" style="margin-bottom:18px">
+    <h2 class="section-heading">QA Tablet by Team</h2>
+    <div style="position:relative;height:280px"><canvas id="chartByTeam"></canvas></div>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <h2 class="section-heading">Own / Transfer / Be Transferred by Team</h2>
+    <div style="position:relative;height:300px"><canvas id="chartOwnTransfer"></canvas></div>
+  </div>
+</div>
+
+<footer></footer>
+</div>
+
+<div class="modal" id="photoModal">
+  <div class="modal-box">
+    <img id="modalImage" alt="Dummy photo">
+    <div style="text-align:right;margin-top:10px"><button class="btn-plain" id="closeModal">Close</button></div>
+  </div>
+</div>
+
+<div class="modal" id="deleteConfirmModal">
+  <div class="modal-box delete-confirm-box">
+    <p class="delete-confirm-text">Are you sure to delete?</p>
+    <div class="delete-confirm-actions">
+      <button class="btn-confirm-no" id="deleteConfirmNo">No</button>
+      <button class="btn-confirm-yes" id="deleteConfirmYes">Yes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+// ===== Google Apps Script Web App integration =====
+// Sau khi deploy Apps Script dạng Web App, dán URL (dạng https://script.google.com/macros/s/xxx/exec) vào đây.
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbye4YvBCu7R85USicQ9QOv4R2c1w1kYFH0X0YZfCyJuU39gddVhfvRf8pg4loHRVt5p/exec';
+let activeUserOps = 0; // số thao tác đang gọi server (dùng để theo dõi trạng thái đồng bộ nếu cần)
+function trackOp(promise){
+  activeUserOps++;
+  return promise.finally(()=>{activeUserOps=Math.max(0,activeUserOps-1);});
+}
+async function gsRun(fnName, ...args){
+  // Gọi Apps Script Web App qua fetch() — dùng Content-Type: text/plain để tránh
+  // CORS preflight (Apps Script Web App không xử lý OPTIONS preflight tốt).
+  const resp = await fetch(GAS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn: fnName, args })
+  });
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  const json = await resp.json();
+  if(!json.ok) throw new Error(json.error || 'Server error');
+  return json.data;
+}
+function applyServerData(data){
+  data=data||{};
+  state.tablets=Array.isArray(data.tablets)?data.tablets:state.tablets;
+  state.logs=Array.isArray(data.logs)?data.logs:state.logs;
+  state.logDates=Array.isArray(data.logDates)?data.logDates:state.logDates;
+  state.logGrid=data.logGrid&&typeof data.logGrid==='object'?data.logGrid:state.logGrid;
+  state.signBatches=Array.isArray(data.signBatches)?data.signBatches:state.signBatches;
+  save();
+  render();
+}
+function handleServerError(err){
+  console.error(err);
+  showToast('⚠ Không thể kết nối server, vui lòng thử lại');
+}
+function loadFromServer(){
+  if(!GAS_API_URL)return;
+  trackOp(gsRun('getData')).then(applyServerData).catch(handleServerError);
+}
+const state={tablets:JSON.parse(localStorage.getItem('qaTabletInventory')||'[]'),logs:JSON.parse(localStorage.getItem('qaTabletLogs')||'[]'),logDates:JSON.parse(localStorage.getItem('qaTabletLogDates')||'[]'),logGrid:JSON.parse(localStorage.getItem('qaTabletLogGrid')||'{}'),active:'SUMMARY',image:null,signBatches:JSON.parse(localStorage.getItem('qaTabletSignBatches')||'[]'),signUI:{confirmingSign:false,confirmingApprove:false,confirmingReject:false,showSignOffActions:false,pwInput:'',pwError:'',commentInput:''}};
+function currentBatch(){return state.signBatches.find(b=>b.status==='PENDING')||null}
+function latestBatch(){return state.signBatches.length?state.signBatches[state.signBatches.length-1]:null}
+function createPendingBatch(reason){const last=latestBatch();const batch={id:'UPD-'+Date.now(),no:state.signBatches.length+1,createdAt:new Date().toISOString(),reason:reason||'Tablet inventory / In-Out update',status:'PENDING',approvedAt:null,approvedBy:null,rejectedAt:null,rejectedBy:null,comment:'',snapshot:{tabletCount:state.tablets.length,logCount:state.logs.length}};state.signBatches.push(batch);return batch}
+function ensurePendingBatch(reason){return currentBatch()||createPendingBatch(reason)}
+
+const SIGN_PASSWORD='kimjs2026';const APPROVER_NAME='Kim Joo Shik';const SIG_IMG='data:image/jpeg;base64,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';
+const $=id=>document.getElementById(id); const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function save(){localStorage.setItem('qaTabletInventory',JSON.stringify(state.tablets));localStorage.setItem('qaTabletLogs',JSON.stringify(state.logs));localStorage.setItem('qaTabletLogDates',JSON.stringify(state.logDates));localStorage.setItem('qaTabletLogGrid',JSON.stringify(state.logGrid));localStorage.setItem('qaTabletSignBatches',JSON.stringify(state.signBatches));pushToServer();}
+function pushToServer(){
+  if(!GAS_API_URL)return;
+  const payload={tablets:state.tablets,logs:state.logs,logDates:state.logDates,logGrid:state.logGrid,signBatches:state.signBatches};
+  trackOp(gsRun('saveData',payload)).then(()=>showSyncedBadge()).catch(handleServerError);
+}
+function preview(){ $('dzPreview').innerHTML=state.image?`<img src="${state.image}" alt="Tablet">`:''; }
+function openPhoto(id){const x=state.tablets.find(t=>t.id===id);if(!x||!x.image)return;$('modalImage').src=x.image;$('photoModal').classList.add('show');}
+function resizeImage(file,scale=0.95,quality=0.95){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+        canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',quality));
+      };
+      img.onerror=reject;
+      img.src=r.result;
+    };
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
+}
+function normalizeTeamText(v){
+  const raw=String(v||'').trim();
+  const compact=raw.toLowerCase().replace(/[.,:;|()\[\]{}'"-]/g,'').replace(/\s+/g,'');
+  if(compact==='walmart'||compact==='walmartinc')return 'Wal-Mart';
+  return raw;
+}
+function extractTeamFromOcr(text){
+  const tokens=String(text||'').split(/\s+/).map(t=>t.trim()).filter(Boolean);
+  if(!tokens.length)return '';
+  const first=tokens[0].replace(/^[^\w&]+|[^\w&]+$/g,'');
+  if(!first)return '';
+  return normalizeTeamText(first);
+}
+async function readTeamFromImage(file){
+  const teamEl=$('fTeam');
+  if(!teamEl)return;
+  if(typeof Tesseract==='undefined'){
+    // Fallback: try the first filename token when OCR library is unavailable.
+    const fallback=extractTeamFromOcr(String(file.name||'').replace(/\.[^.]+$/,''));
+    if(fallback){teamEl.value=fallback;updateTabletSelectPlaceholder(teamEl);teamEl.dispatchEvent(new Event('change'));}
+    return;
+  }
+  teamEl.dataset.ocrReading='true';
+  teamEl.disabled=true;
+  try{
+    const result=await Tesseract.recognize(file,'eng');
+    const team=extractTeamFromOcr(result?.data?.text||'');
+    if(team){
+      teamEl.value=team;
+      updateTabletSelectPlaceholder(teamEl);
+      $('fCode').dataset.autoGenerated='true';
+      updateGeneratedCode();
+    }
+  }catch(err){
+    console.warn('Team OCR failed:',err);
+  }finally{
+    teamEl.disabled=false;
+    teamEl.dataset.ocrReading='false';
+  }
+}
+async function processImage(file){
+  if(!file)return;
+  if(!file.type.startsWith('image/'))return alert('Please select an image.');
+  try{
+    // Reduce inserted image dimensions by 5% (95% of original width/height).
+    state.image=await resizeImage(file,0.95,0.95);
+    preview();
+    await readTeamFromImage(file);
+  }catch(err){
+    console.error(err);
+    alert('Unable to process this image.');
+  }
+}
+function renderInventory(){const b=$('inventoryBody');b.innerHTML=state.tablets.length?state.tablets.map((x,i)=>`<tr><td>${i+1}</td><td>${x.image?`<img class="photo-thumb" src="${x.image}" alt="Tablet photo" onclick="openPhoto('${x.id}')">`:`<div class="photo-empty">No photo</div>`}</td><td>${esc(x.team)}</td><td><b>${esc(x.code)}</b></td><td>${esc(x.brand)}</td><td>${esc(x.model)}</td><td>${esc(x.purpose)}</td><td><button class="btn-del" onclick="delTablet('${x.id}')">✕</button></td></tr>`).join(''):'<tr class="empty-row"><td colspan="8">No tablet records found.</td></tr>';}
+let _pendingDeleteAction=null;
+function showDeleteConfirm(action){_pendingDeleteAction=action;$('deleteConfirmModal').classList.add('show');}
+function hideDeleteConfirm(){_pendingDeleteAction=null;$('deleteConfirmModal').classList.remove('show');}
+function delTablet(id){
+  showDeleteConfirm(()=>{
+    state.tablets=state.tablets.filter(x=>x.id!==id);
+    ensurePendingBatch('Tablet inventory update');
+    save();render();
+  });
+}
+function generateTabletCode(team){
+  if(!team)return '';
+  const prefix=team;
+  const re=new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'-(\\d+)$');
+  let max=0;
+  state.tablets.forEach(x=>{
+    const m=String(x.code||'').match(re);
+    if(m)max=Math.max(max,parseInt(m[1],10)||0);
+  });
+  return prefix+'-'+String(max+1).padStart(2,'0');
+}
+function updateGeneratedCode(){
+  const el=$('fCode');
+  if(!el.value.trim() || el.dataset.autoGenerated==='true'){
+    el.value=generateTabletCode($('fTeam').value);
+    el.dataset.autoGenerated='true';
+  }
+}
+async function addTablet(){
+  const team=$('fTeam').value;
+  const enteredCode=$('fCode').value.trim();
+  const brand=$('fBrand').value,model=$('fModel').value,purpose=$('fPurpose').value;
+  if(!team||!brand||!model||!purpose){return alert('Please complete Team, Brand, Model and Purpose.');}
+  const code=enteredCode||generateTabletCode(team);
+  let imageValue=state.image;
+  if(state.image&&GAS_API_URL){
+    try{
+      const uploaded=await trackOp(gsRun('uploadImage',state.image,(code||'tablet')+'_'+Date.now()+'.jpg'));
+      if(uploaded&&uploaded.url)imageValue=uploaded.url;
+    }catch(err){
+      console.error(err);
+      showToast('⚠ Không tải được ảnh lên server, đã lưu ảnh cục bộ');
+    }
+  }
+  const x={id:Date.now().toString(),team:team,code:code,brand:brand,model:model,purpose:purpose,image:imageValue,status:'Own',reason:''};
+  state.tablets.push(x);state.image=null;
+  ['fTeam','fCode'].forEach(id=>$(id).value='');$('fCode').dataset.autoGenerated='true';
+  ['fBrand','fModel','fPurpose'].forEach(id=>$(id).selectedIndex=0);
+  ['fBrand','fModel','fPurpose'].forEach(id=>updateTabletSelectPlaceholder($(id)));
+  preview();save();render();
+}
+function formatLogDateHeader(date){if(!date)return '';const parts=String(date).split('-');if(parts.length!==3)return date;return `${Number(parts[0])}/${Number(parts[1])}/${Number(parts[2])}`;}
+function normalizeLogDates(){
+  const dates=new Set((state.logDates||[]).filter(Boolean));
+  (state.logs||[]).forEach(x=>{if(x&&x.date)dates.add(x.date);});
+  state.logDates=Array.from(dates).sort();
+}
+function migrateLegacyLogs(){
+  normalizeLogDates();
+  const grid=state.logGrid||{};
+  (state.logs||[]).forEach(x=>{
+    if(!x||!x.code||!x.date)return;
+    const key=x.code+'|'+x.date;
+    if(grid[key]!==undefined)return;
+    const pieces=[];
+    if(x.io)pieces.push(x.io==='Check-Out'?'x':'o');
+    if(x.team)pieces.push('→ '+x.team);
+    if(x.by)pieces.push('· '+x.by);
+    if(x.remark)pieces.push(x.remark);
+    grid[key]=pieces.join(' ');
+  });
+  state.logGrid=grid;
+}
+function renderLogs(){
+  migrateLegacyLogs();
+  const head=$('logHead'),body=$('logBody');
+  const dates=state.logDates||[];
+  head.innerHTML='<tr><th>No.</th><th>Team</th><th>Tablet Code</th><th>Status</th><th>Reason</th>'+dates.map(d=>`<th data-date="${esc(d)}">${esc(formatLogDateHeader(d))}</th>`).join('')+'</tr>';
+  const tablets=state.tablets||[];
+  const cellsWrap=(x,d)=>{const key=x.code+'|'+d;const val=state.logGrid[key]??'';return `<td class="grid-cell"><input class="log-cell-input" data-code="${esc(x.code)}" data-date="${esc(d)}" value="${esc(val)}" placeholder="o"></td>`};
+  body.innerHTML=tablets.length?tablets.map((x,i)=>{
+    const cells=dates.map(d=>cellsWrap(x,d)).join('');
+    const reasonOptions=['Real-Time','Final Insp','-'].map(v=>`<option value="${esc(v)}" ${x.reason===v?'selected':''}>${esc(v)}</option>`).join('');
+    return `<tr><td>${i+1}</td><td>${esc(x.team)}</td><td class="code-cell">${esc(x.code)}</td><td><span class="chip ${x.status==='Transfer'?'out-chip':''}">${esc(x.status||'')}</span></td><td><select class="log-reason-select" data-id="${x.id}" ${x.reason?'disabled':''}><option value="" ${!x.reason?'selected':''}>Select</option>${reasonOptions}</select></td>${cells}</tr>`;
+  }).join(''):`<tr class="empty-row"><td colspan="${5+dates.length}">No tablet records found.</td></tr>`;
+  function applyLogCellValue(code,date,value){
+    const key=code+'|'+date;
+    state.logGrid[key]=value;
+    const t=state.tablets.find(x=>x.code===code);
+    if(t){
+      const matches=String(value||'').match(/\b[ox]\b/gi);
+      const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
+      if(flag==='x')t.status='Transfer';
+      else if(flag==='o')t.status='Own';
+    }
+    ensurePendingBatch('QA Tablet In-Out Log update');
+    save();
+    render();
+  }
+  body.querySelectorAll('.log-cell-input').forEach(el=>{
+    el.addEventListener('change',()=>{applyLogCellValue(el.dataset.code,el.dataset.date,el.value);});
+  });
+  body.querySelectorAll('.log-reason-select').forEach(el=>{
+    el.addEventListener('change',()=>{
+      const t=state.tablets.find(x=>x.id===el.dataset.id);
+      if(t){t.reason=el.value;ensurePendingBatch('QA Tablet In-Out Log update');save();render();}
+    });
+  });
+}
+function addLogDate(){
+  const date=$('logColumnDate').value;
+  if(!date)return alert('Please select a date.');
+  if((state.logDates||[]).includes(date))return alert('This date column already exists.');
+  state.logDates.push(date);
+  (state.tablets||[]).forEach(t=>{
+    const key=t.code+'|'+date;
+    if(state.logGrid[key]===undefined)state.logGrid[key]='o';
+  });
+  ensurePendingBatch('QA Tablet In-Out Log update');save();renderLogs();
+  $('logColumnDate').value='';
+}
+function delLog(id){if(confirm('Delete this log?')){state.logs=state.logs.filter(x=>x.id!==id);ensurePendingBatch('QA Tablet In-Out Log update');save();renderLogs();}}
+function addLog(){return addLogDate();}
+// ===== Summary charts: QA Tablet by Team / Own vs Transfer vs Be Transferred =====
+if(typeof Chart!=='undefined'&&typeof ChartDataLabels!=='undefined'){Chart.register(ChartDataLabels);}
+function teamOrder(){
+  const seen=[];
+  (state.tablets||[]).forEach(t=>{const team=(t.team||'').trim()||'—';if(!seen.includes(team))seen.push(team);});
+  return seen;
+}
+function latestLogDate(){const dates=state.logDates||[];return dates.length?dates[dates.length-1]:null;}
+function computeTeamStats(){
+  const stats={};
+  const ensure=team=>{if(!stats[team])stats[team]={total:0,own:0,transfer:0,beTransferred:0};return stats[team];};
+  const latestDate=latestLogDate();
+  (state.tablets||[]).forEach(t=>{
+    const team=(t.team||'').trim()||'—';
+    const s=ensure(team);
+    s.total++;
+    const cellVal=latestDate?String(state.logGrid[t.code+'|'+latestDate]||''):'';
+    const matches=cellVal.match(/\b[ox]\b/gi);
+    const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
+    const isTransfer=flag==='x'||(!flag&&t.status==='Transfer');
+    if(isTransfer){
+      s.transfer++;
+      const m=cellVal.match(/\(([^)]+)\)/);
+      const destRaw=m&&m[1]?m[1].trim():'';
+      const dest=destRaw?normalizeTeamText(destRaw):'';
+      if(dest&&dest!==team)ensure(dest).beTransferred++;
+    }else{
+      s.own++;
+    }
+  });
+  return stats;
+}
+let _chartByTeam=null,_chartOwnTransfer=null;
+function renderCharts(){
+  if(typeof Chart==='undefined')return;
+  const detailEl=$('sectionDetail');
+  if(!detailEl||detailEl.style.display==='none')return;
+  const stats=computeTeamStats();
+  const teams=teamOrder();
+  Object.keys(stats).forEach(t=>{if(!teams.includes(t))teams.push(t);});
+  const totals=teams.map(t=>stats[t].total);
+  const own=teams.map(t=>stats[t].own);
+  const transfer=teams.map(t=>stats[t].transfer);
+  const beTransferred=teams.map(t=>stats[t].beTransferred);
+  const labelOpts={color:'#1B3A63',font:{weight:'700',size:12},display:c=>c.dataset.data[c.dataIndex]>0};
+  const c1=$('chartByTeam');
+  if(c1){
+    if(_chartByTeam)_chartByTeam.destroy();
+    _chartByTeam=new Chart(c1.getContext('2d'),{
+      type:'bar',
+      data:{labels:teams,datasets:[{label:'QA Tablet',data:totals,backgroundColor:'#2E7BF0',borderRadius:4,maxBarThickness:56}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top'},labelOpts)},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
+    });
+  }
+  const c2=$('chartOwnTransfer');
+  if(c2){
+    if(_chartOwnTransfer)_chartOwnTransfer.destroy();
+    _chartOwnTransfer=new Chart(c2.getContext('2d'),{
+      type:'bar',
+      data:{labels:teams,datasets:[
+        {label:'Own',data:own,backgroundColor:'#1E8E5A',stack:'s',maxBarThickness:56},
+        {label:'Transfer',data:transfer,backgroundColor:'#E8B33D',stack:'s',maxBarThickness:56},
+        {label:'Be Transferred',data:beTransferred,backgroundColor:'#8C52FF',stack:'s',maxBarThickness:56}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({anchor:'end',align:'end'},labelOpts)},scales:{y:{beginAtZero:true,stacked:true,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
+    });
+  }
+}
+function filters(){}
+function resetSignUI(){state.signUI={confirmingSign:false,confirmingApprove:false,confirmingReject:false,showSignOffActions:false,pwInput:'',pwError:'',commentInput:''};}
+function fmtSignDateTime(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d.getTime()))return String(iso);const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+function buildApprovalLeftHtml(){const b=currentBatch()||latestBatch();if(!b)return `<span class="status-badge status-pending">● PENDING SIGN-OFF</span><span style="font-size:12px;color:var(--muted);">QA Senior Manager: Kim Joo Shik</span>`;if(b.status==='SIGNED'){return `<span class="status-badge status-approved">✓ SIGNED OFF</span><div class="sig-stamp"><img src="${SIG_IMG}" alt="Signature"><div class="sig-meta"><b>${esc(b.approvedBy||APPROVER_NAME)}</b><span>${fmtSignDateTime(b.approvedAt)}</span><input class="sig-comment-input" data-id="${b.id}" value="${esc(b.comment||'')}" placeholder="Add comment..."></div></div>`}if(b.status==='NOT SIGNED'){return `<span class="status-badge status-rejected">✗ NOT SIGNED</span><div class="sig-stamp"><img src="${SIG_IMG}" alt="Signature"><div class="sig-meta"><b>${esc(b.rejectedBy||APPROVER_NAME)}</b><span>${fmtSignDateTime(b.rejectedAt)}</span><input class="sig-comment-input" data-id="${b.id}" value="${esc(b.comment||'')}" placeholder="Add comment..."></div></div>`}return `<span class="status-badge status-pending">● PENDING SIGN-OFF</span><span style="font-size:12px;color:var(--muted);">QA Senior Manager: ${esc(APPROVER_NAME)}</span>`;}
+function buildApprovalRightHtml(){const pending=currentBatch(),latest=latestBatch(),ui=state.signUI;if(!pending&&!latest)return `<button class="dz-btn btn-signoff" id="signOffBtn" disabled>✎ Sign-Off</button>`;if(!pending&&latest)return `<button class="dz-btn btn-nextsignoff" id="nextSignOffBtn">↻ Next Sign-Off</button>`;const b=pending;if(ui.confirmingSign)return `<div class="confirm-box"><span>Enter password for sign-off</span><input type="password" id="pwField" value="${esc(ui.pwInput)}"><button class="dz-btn btn-confirm" id="signYes">Confirm</button><button class="dz-btn btn-cancel-plain" id="signNo">Cancel</button>${ui.pwError?`<span class="pw-error">${esc(ui.pwError)}</span>`:''}</div>`;if(ui.confirmingApprove)return `<div class="confirm-box reject-box"><span>Comment for update</span><textarea id="approveCommentField" placeholder="Enter comment...">${esc(ui.commentInput)}</textarea><div class="reject-actions"><button class="dz-btn btn-approve" id="approveYes">Submit</button><button class="dz-btn btn-cancel-plain" id="approveCancelBtn">Cancel</button></div></div>`;if(ui.confirmingReject)return `<div class="confirm-box reject-box"><span>Reason for not signing update #${b.no}:</span><textarea id="rejectCommentField" placeholder="Enter comment...">${esc(ui.commentInput)}</textarea><div class="reject-actions"><button class="dz-btn" id="rejectYes">Submit</button><button class="dz-btn btn-cancel-plain" id="rejectCancelBtn">Cancel</button></div>${ui.pwError?`<span class="pw-error">${esc(ui.pwError)}</span>`:''}</div>`;if(ui.showSignOffActions)return `<div class="approval-actions"><button class="dz-btn btn-approve" id="approveBtn">Approved</button><button class="dz-btn btn-notsign" id="notSignBtn">Not Sign w/Comment</button><button class="dz-btn btn-cancel-plain" id="cancelActionBtn">Cancel</button></div>`;return `<button class="dz-btn btn-signoff" id="signOffBtn">✎ Sign-Off</button>`;}
+function askSignConfirm(){state.signUI.confirmingSign=true;state.signUI.showSignOffActions=false;state.signUI.confirmingReject=false;state.signUI.pwInput='';state.signUI.pwError='';render();setTimeout(()=>{const e=$('pwField');if(e)e.focus()},0)}
+function cancelSignConfirm(){resetSignUI();render()}
+function confirmSignPassword(){if(state.signUI.pwInput!==SIGN_PASSWORD){state.signUI.pwError='Incorrect password.';render();return}state.signUI.confirmingSign=false;state.signUI.pwInput='';state.signUI.pwError='';state.signUI.showSignOffActions=true;render()}
+function cancelSignOffActions(){resetSignUI();render()}
+function askApproveConfirm(){state.signUI.confirmingApprove=true;state.signUI.showSignOffActions=false;state.signUI.confirmingReject=false;state.signUI.commentInput='';state.signUI.pwError='';render();setTimeout(()=>{const e=$('approveCommentField');if(e)e.focus()},0)}
+function cancelApproveConfirm(){resetSignUI();render()}
+function doApproveConfirm(){const b=currentBatch();if(!b)return;b.status='SIGNED';b.approvedAt=new Date().toISOString();b.approvedBy=APPROVER_NAME;b.comment=state.signUI.commentInput.trim();b.rejectedAt=null;b.rejectedBy=null;resetSignUI();save();render()}
+function askRejectConfirm(){state.signUI.confirmingReject=true;state.signUI.showSignOffActions=false;state.signUI.confirmingApprove=false;state.signUI.pwError='';state.signUI.commentInput='';render();setTimeout(()=>{const e=$('rejectCommentField');if(e)e.focus()},0)}
+function cancelRejectConfirm(){resetSignUI();render()}
+function doRejectApprove(){const b=currentBatch();if(!b)return;if(!state.signUI.commentInput.trim()){state.signUI.pwError='Please enter a comment.';render();return}b.status='NOT SIGNED';b.rejectedAt=new Date().toISOString();b.rejectedBy=APPROVER_NAME;b.comment=state.signUI.commentInput.trim();resetSignUI();save();render()}
+function askNextSignOff(){if(currentBatch())return;createPendingBatch('Tablet inventory / In-Out update');state.signUI.confirmingSign=true;state.signUI.showSignOffActions=false;state.signUI.confirmingReject=false;state.signUI.confirmingApprove=false;state.signUI.pwInput='';state.signUI.pwError='';save();render();setTimeout(()=>{const e=$('pwField');if(e)e.focus()},0)}
+function updateSigComment(id,value){const b=state.signBatches.find(x=>x.id===id);if(!b)return;b.comment=value;save()}
+function bindApprovalRowEvents(){const sob=$('signOffBtn');if(sob)sob.onclick=askSignConfirm;const sy=$('signYes');if(sy)sy.onclick=confirmSignPassword;const sn=$('signNo');if(sn)sn.onclick=cancelSignConfirm;const pw=$('pwField');if(pw){pw.oninput=e=>state.signUI.pwInput=e.target.value;pw.onkeydown=e=>{if(e.key==='Enter')confirmSignPassword()}}const ap=$('approveBtn');if(ap)ap.onclick=askApproveConfirm;const ay=$('approveYes');if(ay)ay.onclick=doApproveConfirm;const acb=$('approveCancelBtn');if(acb)acb.onclick=cancelApproveConfirm;const acf=$('approveCommentField');if(acf)acf.oninput=e=>state.signUI.commentInput=e.target.value;const ns=$('notSignBtn');if(ns)ns.onclick=askRejectConfirm;const ca=$('cancelActionBtn');if(ca)ca.onclick=cancelSignOffActions;const ry=$('rejectYes');if(ry)ry.onclick=doRejectApprove;const rc=$('rejectCancelBtn');if(rc)rc.onclick=cancelRejectConfirm;const rcf=$('rejectCommentField');if(rcf)rcf.oninput=e=>state.signUI.commentInput=e.target.value;const nsob=$('nextSignOffBtn');if(nsob)nsob.onclick=askNextSignOff;document.querySelectorAll('.sig-comment-input').forEach(el=>{el.addEventListener('change',()=>updateSigComment(el.dataset.id,el.value));});}
+function renderApproval(){const row=$('approvalRow');if(!row)return;row.innerHTML=`<div class="approval-left">${buildApprovalLeftHtml()}</div><div>${buildApprovalRightHtml()}</div>`;bindApprovalRowEvents();}
+
+function render(){ $('totalCount').textContent=state.tablets.length; $('sectionSummary').style.display=state.active==='SUMMARY'?'block':'none';$('sectionDetail').style.display=state.active==='DETAIL'?'block':'none';$('signPanel').style.display=state.active==='SUMMARY'?'block':'none';const locked=!!(currentBatch()&&currentBatch().status==='PENDING'?false:false);['fTeam','fCode','fBrand','fModel','fPurpose','btnAdd','btnTakePhoto','btnUploadFile'].forEach(id=>{if($(id))$(id).disabled=false});renderInventory();renderLogs();renderApproval();renderCharts();}
+$('closeModal').onclick=()=>{$('photoModal').classList.remove('show')};$('photoModal').onclick=e=>{if(e.target===$('photoModal'))$('photoModal').classList.remove('show')};
+$('deleteConfirmNo').onclick=hideDeleteConfirm;
+$('deleteConfirmYes').onclick=()=>{const action=_pendingDeleteAction;hideDeleteConfirm();if(typeof action==='function')action();};
+$('deleteConfirmModal').onclick=e=>{if(e.target===$('deleteConfirmModal'))hideDeleteConfirm();};$('btnAdd').onclick=addTablet;$('fTeam').onchange=()=>{ $('fCode').dataset.autoGenerated='true'; updateGeneratedCode(); };$('fCode').oninput=()=>{$('fCode').dataset.autoGenerated='false';};$('btnAddDate').onclick=addLogDate;$('btnUploadFile').onclick=()=>$('fileInput').click();$('btnTakePhoto').onclick=()=>$('fileCamera').click();$('fileInput').onchange=e=>processImage(e.target.files[0]);$('fileCamera').onchange=e=>processImage(e.target.files[0]);$('dropzone').ondragover=e=>{e.preventDefault();$('dropzone').classList.add('drag')};$('dropzone').ondragleave=()=>$('dropzone').classList.remove('drag');$('dropzone').ondrop=e=>{e.preventDefault();$('dropzone').classList.remove('drag');processImage(e.dataTransfer.files[0])};
+
+$('btnRefresh').onclick=()=>{
+  const btn=$('btnRefresh');
+  btn.classList.remove('spinning');
+  void btn.offsetWidth;
+  btn.classList.add('spinning');
+  if(GAS_API_URL){
+    trackOp(gsRun('getData'))
+      .then(function(data){
+        applyServerData(data);
+        showSyncedBadge();
+      })
+      .catch(function(err){
+        console.error(err);
+        showToast('⚠ Không thể làm mới, vui lòng thử lại');
+      });
+  }else{
+    render();
+    showSyncedBadge();
+  }
+  setTimeout(()=>btn.classList.remove('spinning'),500);
+};
+function showSyncedBadge(){
+  const b=$('syncedBadge');
+  if(!b)return;
+  b.classList.add('show');
+  clearTimeout(showSyncedBadge._timer);
+  showSyncedBadge._timer=setTimeout(()=>b.classList.remove('show'),2000);
+}
+function showToast(msg){
+  const t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+document.querySelectorAll('.tab-btn').forEach(t=>t.onclick=()=>{state.active=t.dataset.section;document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x===t));render();});
+migrateLegacyLogs();save();filters();render();loadFromServer();
+
+// Style Tablet Info dropdown placeholders in light gray until a real value is selected.
+function updateTabletSelectPlaceholder(el){
+  if(!el) return;
+  el.classList.toggle('placeholder', el.value === '');
+}
+['fBrand','fModel','fPurpose'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){
+    updateTabletSelectPlaceholder(el);
+    el.addEventListener('change',()=>updateTabletSelectPlaceholder(el));
+  }
+});
+
+</script>
+</body>
+</html>
