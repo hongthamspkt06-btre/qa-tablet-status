@@ -790,7 +790,7 @@ function renderCharts(){
   Object.keys(stats).forEach(t=>{if(!teams.includes(t))teams.push(t);});
   teams=sortTeamsAZ(teams);
   const totals=teams.map(t=>(stats[t]&&stats[t].total)||0);
-  // QA Tablet by Team: split each team's QA tablets into Real-Time and Final Insp with no reason.
+  // QA Tablet by Team: Real-Time + Final Insp without a reason.
   const qaRealTime=teams.map(team=>(state.tablets||[]).filter(t=>{
     const tm=(t.team||'').trim()||'—';
     return tm===team && String(t.purpose||'').trim()==='QA MES Real-Time Insp';
@@ -823,7 +823,6 @@ function renderCharts(){
     const real=qaRealTime[i]||0;
     const finalNoReason=qaFinalNoReason[i]||0;
     if(!total)return false;
-    // If both segments exist, show the total only on the upper (Final Insp) segment.
     if(real>0 && finalNoReason>0 && ctx.datasetIndex!==1)return false;
     return {anchor:'end',align:'top',offset:4};
   };
@@ -834,11 +833,11 @@ function renderCharts(){
       type:'bar',
       data:{labels:teams,datasets:[
         {label:'Real-Time',data:qaRealTime,backgroundColor:'#2E7BF0',borderRadius:4,borderSkipped:false,maxBarThickness:56,
-          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}},
-        {label:'Final Insp + no reason',data:qaFinalNoReason,backgroundColor:'#9CCBFF',borderRadius:4,borderSkipped:false,maxBarThickness:56,
-          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#1B3A63',font:{weight:'700',size:11},clamp:true,clip:false}}
+          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,offset:0,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}},
+        {label:' Final Insp',data:qaFinalNoReason,backgroundColor:'#5B9BD5',borderRadius:4,borderSkipped:false,maxBarThickness:56,
+          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:{display:qaTotalLabel,formatter:(_,ctx)=>qaTotals[ctx.dataIndex]||0,anchor:'end',align:'top',offset:4,color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false}},scales:{y:{beginAtZero:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:{display:qaTotalLabel,formatter:(_,ctx)=>qaTotals[ctx.dataIndex]||0,anchor:'end',align:'top',offset:4,color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false}},scales:{y:{beginAtZero:true,stacked:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
     });
   }
   const c2=$('chartOwnTransfer');
