@@ -716,15 +716,18 @@ function renderCharts(){
   const own=teams.map(t=>stats[t].own);
   const transfer=teams.map(t=>stats[t].transfer);
   const beTransferred=teams.map(t=>stats[t].beTransferred);
+  const maxTotal=totals.length?Math.max(...totals):0;
+  const stackTotals=teams.map((t,i)=>own[i]+transfer[i]+beTransferred[i]);
+  const maxStack=stackTotals.length?Math.max(...stackTotals):0;
   const singleLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
-  const stackLabelOpts={color:'#FFFFFF',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
+  const stackLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
   const c1=$('chartByTeam');
   if(c1){
     if(_chartByTeam)_chartByTeam.destroy();
     _chartByTeam=new Chart(c1.getContext('2d'),{
       type:'bar',
       data:{labels:teams,datasets:[{label:'QA Tablet',data:totals,backgroundColor:'#2E7BF0',borderRadius:4,maxBarThickness:56}]},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top',offset:4},singleLabelOpts)},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top',offset:4},singleLabelOpts)},scales:{y:{beginAtZero:true,max:maxTotal+1,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
     });
   }
   const c2=$('chartOwnTransfer');
@@ -737,7 +740,7 @@ function renderCharts(){
         {label:'Transfer',data:transfer,backgroundColor:'#E8B33D',stack:'s',maxBarThickness:56},
         {label:'Be Transferred',data:beTransferred,backgroundColor:'#8C52FF',stack:'s',maxBarThickness:56}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({anchor:'center',align:'center'},stackLabelOpts)},scales:{y:{beginAtZero:true,stacked:true,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({anchor:'end',align:'end'},stackLabelOpts)},scales:{y:{beginAtZero:true,stacked:true,max:maxStack+1,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
     });
   }
 }
