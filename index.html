@@ -691,33 +691,93 @@ function latestLogDate(){const dates=state.logDates||[];return dates.length?date
 function computeTeamStats(){
   const stats={};
   const ensure=team=>{if(!stats[team])stats[team]={total:0,own:0,transfer:0,beTransferred:0};return stats[team];};
-  const dates=state.logDates||[];
+  const dates=(state.logDates||[]).slice().sort();
+
+  /*
+   * Summary chart uses the latest log date as the current status.
+   *
+   * Transfer:
+   *   - Count "x" ONLY from the last/latest date column.
+   *
+   * Be Transferred:
+   *   - If the latest date is "x" and that cell contains a destination
+   *     team, use that destination.
+   *   - If the latest date is "x" but has no destination team, search
+   *     backwards through earlier date columns and use the most recent
+   *     destination team found on an earlier "x".
+   *
+   * Own:
+   *   - If the latest date is "o", count Own and ignore previous transfers.
+   *
+   * If there is no o/x in any log date, fall back to the tablet Status.
+   */
   (state.tablets||[]).forEach(t=>{
     const team=(t.team||'').trim()||'—';
     ensure(team).total++;
-    let hadFlag=false;
-    let lastFlag=null;
-    dates.forEach(date=>{
-      const cellVal=String(state.logGrid[t.code+'|'+date]||'');
+
+    let latestFlag=null;
+    let latestCellVal='';
+    let latestIndex=-1;
+
+    // Find the latest date containing an o/x flag.
+    for(let i=dates.length-1;i>=0;i--){
+      const cellVal=String(state.logGrid[t.code+'|'+dates[i]]||'');
       const matches=cellVal.match(/\b[ox]\b/gi);
       const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
-      if(!flag)return;
-      hadFlag=true;
-      lastFlag=flag;
-      if(flag==='x'){
-        ensure(team).transfer++;
-        const m=cellVal.match(/\(([^)]+)\)/);
-        const destRaw=m&&m[1]?m[1].trim():'';
-        const dest=destRaw?normalizeTeamText(destRaw):'';
-        if(dest&&dest!==team)ensure(dest).beTransferred++;
+      if(flag){
+        latestFlag=flag;
+        latestCellVal=cellVal;
+        latestIndex=i;
+        break;
       }
-    });
-    if(!hadFlag){
-      if(t.status==='Transfer')ensure(team).transfer++;else ensure(team).own++;
-    }else if(lastFlag!=='x'){
+    }
+
+    if(latestFlag==='o'){
+      // Returned to Own: all previous transfers are ignored.
+      ensure(team).own++;
+      return;
+    }
+
+    if(latestFlag==='x'){
+      // Transfer is counted ONLY from the latest date.
+      ensure(team).transfer++;
+
+      // First try to get the destination team from the latest x cell.
+      let destRaw='';
+      let m=latestCellVal.match(/\(([^)]+)\)/);
+      if(m&&m[1]) destRaw=m[1].trim();
+
+      // If latest x has no destination, trace backwards to earlier x cells.
+      if(!destRaw){
+        for(let i=latestIndex-1;i>=0;i--){
+          const prevCell=String(state.logGrid[t.code+'|'+dates[i]]||'');
+          const prevMatches=prevCell.match(/\b[ox]\b/gi);
+          const prevFlag=prevMatches&&prevMatches.length
+            ?prevMatches[prevMatches.length-1].toLowerCase()
+            :null;
+          if(prevFlag!=='x') continue;
+
+          const prevM=prevCell.match(/\(([^)]+)\)/);
+          if(prevM&&prevM[1]&&prevM[1].trim()){
+            destRaw=prevM[1].trim();
+            break;
+          }
+        }
+      }
+
+      const dest=destRaw?normalizeTeamText(destRaw):'';
+      if(dest&&dest!==team) ensure(dest).beTransferred++;
+      return;
+    }
+
+    // No log flag: fall back to the tablet's current Status.
+    if(t.status==='Transfer'){
+      ensure(team).transfer++;
+    }else{
       ensure(team).own++;
     }
   });
+
   return stats;
 }
 let _chartByTeam=null,_chartOwnTransfer=null;
