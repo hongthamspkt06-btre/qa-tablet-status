@@ -790,16 +790,16 @@ function renderCharts(){
   Object.keys(stats).forEach(t=>{if(!teams.includes(t))teams.push(t);});
   teams=sortTeamsAZ(teams);
   const totals=teams.map(t=>(stats[t]&&stats[t].total)||0);
-  // QA Tablet by Team: Real-Time + Final Insp without a reason.
+  // QA Tablet by Team: Real-Time + Final Insp.
+  // Green = all Final Insp / '-' purpose records, regardless of the Reason field.
   const qaRealTime=teams.map(team=>(state.tablets||[]).filter(t=>{
     const tm=(t.team||'').trim()||'—';
     return tm===team && String(t.purpose||'').trim()==='QA MES Real-Time Insp';
   }).length);
   const qaFinalNoReason=teams.map(team=>(state.tablets||[]).filter(t=>{
     const tm=(t.team||'').trim()||'—';
-    const purpose=String(t.purpose||'').trim().toLowerCase();
-    const reason=String(t.reason||'').trim();
-    return tm===team && purpose.includes('final insp') && !reason;
+    const purpose=String(t.purpose||'').trim();
+    return tm===team && (purpose==='-' || purpose==="Carter's Final Insp" || purpose==='AEO Final Insp' || purpose==='Target Final Insp');
   }).length);
   const qaTotals=teams.map((_,i)=>qaRealTime[i]+qaFinalNoReason[i]);
   const own=teams.map(t=>(stats[t]&&stats[t].own)||0);
