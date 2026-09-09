@@ -679,27 +679,41 @@ function teamOrder(){
   (state.tablets||[]).forEach(t=>{const team=(t.team||'').trim()||'—';if(!seen.includes(team))seen.push(team);});
   return seen;
 }
+function isOfficeTeam(name){return String(name||'').trim().toLowerCase()==='office';}
+function sortTeamsAZ(list){
+  return list.slice().sort((a,b)=>{
+    const ao=isOfficeTeam(a),bo=isOfficeTeam(b);
+    if(ao!==bo)return ao?1:-1;
+    return String(a).localeCompare(String(b),'vi',{sensitivity:'base',numeric:true});
+  });
+}
 function latestLogDate(){const dates=state.logDates||[];return dates.length?dates[dates.length-1]:null;}
 function computeTeamStats(){
   const stats={};
   const ensure=team=>{if(!stats[team])stats[team]={total:0,own:0,transfer:0,beTransferred:0};return stats[team];};
-  const latestDate=latestLogDate();
+  const dates=state.logDates||[];
   (state.tablets||[]).forEach(t=>{
     const team=(t.team||'').trim()||'—';
-    const s=ensure(team);
-    s.total++;
-    const cellVal=latestDate?String(state.logGrid[t.code+'|'+latestDate]||''):'';
-    const matches=cellVal.match(/\b[ox]\b/gi);
-    const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
-    const isTransfer=flag==='x'||(!flag&&t.status==='Transfer');
-    if(isTransfer){
-      s.transfer++;
-      const m=cellVal.match(/\(([^)]+)\)/);
-      const destRaw=m&&m[1]?m[1].trim():'';
-      const dest=destRaw?normalizeTeamText(destRaw):'';
-      if(dest&&dest!==team)ensure(dest).beTransferred++;
-    }else{
-      s.own++;
+    ensure(team).total++;
+    let hadFlag=false;
+    dates.forEach(date=>{
+      const cellVal=String(state.logGrid[t.code+'|'+date]||'');
+      const matches=cellVal.match(/\b[ox]\b/gi);
+      const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
+      if(!flag)return;
+      hadFlag=true;
+      if(flag==='x'){
+        ensure(team).transfer++;
+        const m=cellVal.match(/\(([^)]+)\)/);
+        const destRaw=m&&m[1]?m[1].trim():'';
+        const dest=destRaw?normalizeTeamText(destRaw):'';
+        if(dest&&dest!==team)ensure(dest).beTransferred++;
+      }else{
+        ensure(team).own++;
+      }
+    });
+    if(!hadFlag){
+      if(t.status==='Transfer')ensure(team).transfer++;else ensure(team).own++;
     }
   });
   return stats;
@@ -710,24 +724,24 @@ function renderCharts(){
   const detailEl=$('sectionDetail');
   if(!detailEl||detailEl.style.display==='none')return;
   const stats=computeTeamStats();
-  const teams=teamOrder();
+  let teams=teamOrder();
   Object.keys(stats).forEach(t=>{if(!teams.includes(t))teams.push(t);});
-  const totals=teams.map(t=>stats[t].total);
-  const own=teams.map(t=>stats[t].own);
-  const transfer=teams.map(t=>stats[t].transfer);
-  const beTransferred=teams.map(t=>stats[t].beTransferred);
+  teams=sortTeamsAZ(teams);
+  const totals=teams.map(t=>(stats[t]&&stats[t].total)||0);
+  const own=teams.map(t=>(stats[t]&&stats[t].own)||0);
+  const transfer=teams.map(t=>(stats[t]&&stats[t].transfer)||0);
+  const beTransferred=teams.map(t=>(stats[t]&&stats[t].beTransferred)||0);
   const maxTotal=totals.length?Math.max(...totals):0;
-  const stackTotals=teams.map((t,i)=>own[i]+transfer[i]+beTransferred[i]);
-  const maxStack=stackTotals.length?Math.max(...stackTotals):0;
+  const maxGroup=teams.length?Math.max(...own,...transfer,...beTransferred):0;
   const singleLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
-  const stackLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
+  const groupLabelOpts={color:'#1B3A63',font:{weight:'700',size:11},clamp:true,clip:false,anchor:'end',align:'top',offset:2,display:c=>c.dataset.data[c.dataIndex]>0};
   const c1=$('chartByTeam');
   if(c1){
     if(_chartByTeam)_chartByTeam.destroy();
     _chartByTeam=new Chart(c1.getContext('2d'),{
       type:'bar',
       data:{labels:teams,datasets:[{label:'QA Tablet',data:totals,backgroundColor:'#2E7BF0',borderRadius:4,maxBarThickness:56}]},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top',offset:4},singleLabelOpts)},scales:{y:{beginAtZero:true,max:maxTotal+1,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top',offset:4},singleLabelOpts)},scales:{y:{beginAtZero:true,max:maxTotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
     });
   }
   const c2=$('chartOwnTransfer');
@@ -736,11 +750,11 @@ function renderCharts(){
     _chartOwnTransfer=new Chart(c2.getContext('2d'),{
       type:'bar',
       data:{labels:teams,datasets:[
-        {label:'Own',data:own,backgroundColor:'#1E8E5A',stack:'s',maxBarThickness:56},
-        {label:'Transfer',data:transfer,backgroundColor:'#E8B33D',stack:'s',maxBarThickness:56},
-        {label:'Be Transferred',data:beTransferred,backgroundColor:'#8C52FF',stack:'s',maxBarThickness:56}
+        {label:'Own',data:own,backgroundColor:'#1E8E5A',maxBarThickness:32},
+        {label:'Transfer',data:transfer,backgroundColor:'#E8B33D',maxBarThickness:32},
+        {label:'Be Transferred',data:beTransferred,backgroundColor:'#8C52FF',maxBarThickness:32}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({anchor:'end',align:'end'},stackLabelOpts)},scales:{y:{beginAtZero:true,stacked:true,max:maxStack+1,ticks:{precision:0},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({},groupLabelOpts)},scales:{y:{beginAtZero:true,max:maxGroup+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{offset:true,grid:{display:true,color:'rgba(148,163,184,0.45)',borderDash:[4,4],drawTicks:false}}}}
     });
   }
 }
