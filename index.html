@@ -696,24 +696,26 @@ function computeTeamStats(){
     const team=(t.team||'').trim()||'—';
     ensure(team).total++;
     let hadFlag=false;
+    let lastFlag=null;
     dates.forEach(date=>{
       const cellVal=String(state.logGrid[t.code+'|'+date]||'');
       const matches=cellVal.match(/\b[ox]\b/gi);
       const flag=matches&&matches.length?matches[matches.length-1].toLowerCase():null;
       if(!flag)return;
       hadFlag=true;
+      lastFlag=flag;
       if(flag==='x'){
         ensure(team).transfer++;
         const m=cellVal.match(/\(([^)]+)\)/);
         const destRaw=m&&m[1]?m[1].trim():'';
         const dest=destRaw?normalizeTeamText(destRaw):'';
         if(dest&&dest!==team)ensure(dest).beTransferred++;
-      }else{
-        ensure(team).own++;
       }
     });
     if(!hadFlag){
       if(t.status==='Transfer')ensure(team).transfer++;else ensure(team).own++;
+    }else if(lastFlag!=='x'){
+      ensure(team).own++;
     }
   });
   return stats;
@@ -754,7 +756,7 @@ function renderCharts(){
         {label:'Transfer',data:transfer,backgroundColor:'#E8B33D',maxBarThickness:32},
         {label:'Be Transferred',data:beTransferred,backgroundColor:'#8C52FF',maxBarThickness:32}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({},groupLabelOpts)},scales:{y:{beginAtZero:true,max:maxGroup+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{offset:true,grid:{display:true,color:'rgba(148,163,184,0.45)',borderDash:[4,4],drawTicks:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:Object.assign({},groupLabelOpts)},scales:{y:{beginAtZero:true,max:maxGroup+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{offset:true,grid:{display:true,color:'rgba(148,163,184,0.45)',borderDash:[2,8],drawTicks:false}}}}
     });
   }
 }
