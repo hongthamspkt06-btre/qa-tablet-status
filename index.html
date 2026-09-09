@@ -810,21 +810,49 @@ function renderCharts(){
   const maxGroup=teams.length?Math.max(...own,...transfer,...beTransferred):0;
   const singleLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
   const groupLabelOpts={color:'#1B3A63',font:{weight:'700',size:11},clamp:true,clip:false,anchor:'end',align:'top',offset:2,display:c=>c.dataset.data[c.dataIndex]>0};
-  const qaSegmentLabel=(ctx)=>{
+  const qaSegmentAnchor=(ctx)=>{
     const i=ctx.dataIndex;
     const value=Number(ctx.dataset.data[i]||0);
     const total=qaTotals[i]||0;
-    if(!value)return false;
-    return total===value ? {anchor:'end',align:'top',offset:4} : {anchor:'center',align:'center',offset:0};
+    return total===value ? 'end' : 'center';
   };
-  const qaTotalLabel=(ctx)=>{
+  const qaSegmentAlign=(ctx)=>{
+    const i=ctx.dataIndex;
+    const value=Number(ctx.dataset.data[i]||0);
+    const total=qaTotals[i]||0;
+    return total===value ? 'top' : 'center';
+  };
+  const qaTotalDisplay=(ctx)=>{
     const i=ctx.dataIndex;
     const total=qaTotals[i]||0;
     const real=qaRealTime[i]||0;
     const finalNoReason=qaFinalNoReason[i]||0;
     if(!total)return false;
-    if(real>0 && finalNoReason>0 && ctx.datasetIndex!==1)return false;
-    return {anchor:'end',align:'top',offset:4};
+    // With two stacked segments, put the total on the upper Final Insp segment.
+    // With one segment, put the total on that segment.
+    return (real>0 && finalNoReason>0) ? ctx.datasetIndex===1 : ctx.dataset.data[i]>0;
+  };
+  const qaValueLabels={
+    display:c=>Number(c.dataset.data[c.dataIndex]||0)>0,
+    anchor:qaSegmentAnchor,
+    align:qaSegmentAlign,
+    offset:0,
+    formatter:v=>v,
+    color:'#fff',
+    font:{weight:'700',size:11},
+    clamp:true,
+    clip:false
+  };
+  const qaTotalLabels={
+    display:qaTotalDisplay,
+    formatter:(_,ctx)=>qaTotals[ctx.dataIndex]||0,
+    anchor:'end',
+    align:'top',
+    offset:4,
+    color:'#1B3A63',
+    font:{weight:'700',size:12},
+    clamp:true,
+    clip:false
   };
   const c1=$('chartByTeam');
   if(c1){
@@ -832,12 +860,10 @@ function renderCharts(){
     _chartByTeam=new Chart(c1.getContext('2d'),{
       type:'bar',
       data:{labels:teams,datasets:[
-        {label:'Real-Time',data:qaRealTime,backgroundColor:'#2E7BF0',borderRadius:4,borderSkipped:false,maxBarThickness:56,
-          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,offset:0,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}},
-        {label:' Final Insp',data:qaFinalNoReason,backgroundColor:'#5B9BD5',borderRadius:4,borderSkipped:false,maxBarThickness:56,
-          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}}
+        {label:'Real-Time',data:qaRealTime,backgroundColor:'#2E7BF0',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}},
+        {label:' Final Insp',data:qaFinalNoReason,backgroundColor:'rgb(118,147,60)',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:{display:qaTotalLabel,formatter:(_,ctx)=>qaTotals[ctx.dataIndex]||0,anchor:'end',align:'top',offset:4,color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false}},scales:{y:{beginAtZero:true,stacked:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}}},scales:{y:{beginAtZero:true,stacked:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
     });
   }
   const c2=$('chartOwnTransfer');
