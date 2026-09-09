@@ -790,20 +790,55 @@ function renderCharts(){
   Object.keys(stats).forEach(t=>{if(!teams.includes(t))teams.push(t);});
   teams=sortTeamsAZ(teams);
   const totals=teams.map(t=>(stats[t]&&stats[t].total)||0);
+  // QA Tablet by Team: split each team's QA tablets into Real-Time and Final Insp with no reason.
+  const qaRealTime=teams.map(team=>(state.tablets||[]).filter(t=>{
+    const tm=(t.team||'').trim()||'—';
+    return tm===team && String(t.purpose||'').trim()==='QA MES Real-Time Insp';
+  }).length);
+  const qaFinalNoReason=teams.map(team=>(state.tablets||[]).filter(t=>{
+    const tm=(t.team||'').trim()||'—';
+    const purpose=String(t.purpose||'').trim().toLowerCase();
+    const reason=String(t.reason||'').trim();
+    return tm===team && purpose.includes('final insp') && !reason;
+  }).length);
+  const qaTotals=teams.map((_,i)=>qaRealTime[i]+qaFinalNoReason[i]);
   const own=teams.map(t=>(stats[t]&&stats[t].own)||0);
   const transfer=teams.map(t=>(stats[t]&&stats[t].transfer)||0);
   const beTransferred=teams.map(t=>(stats[t]&&stats[t].beTransferred)||0);
   const maxTotal=totals.length?Math.max(...totals):0;
+  const maxQATotal=qaTotals.length?Math.max(...qaTotals):0;
   const maxGroup=teams.length?Math.max(...own,...transfer,...beTransferred):0;
   const singleLabelOpts={color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false,display:c=>c.dataset.data[c.dataIndex]>0};
   const groupLabelOpts={color:'#1B3A63',font:{weight:'700',size:11},clamp:true,clip:false,anchor:'end',align:'top',offset:2,display:c=>c.dataset.data[c.dataIndex]>0};
+  const qaSegmentLabel=(ctx)=>{
+    const i=ctx.dataIndex;
+    const value=Number(ctx.dataset.data[i]||0);
+    const total=qaTotals[i]||0;
+    if(!value)return false;
+    return total===value ? {anchor:'end',align:'top',offset:4} : {anchor:'center',align:'center',offset:0};
+  };
+  const qaTotalLabel=(ctx)=>{
+    const i=ctx.dataIndex;
+    const total=qaTotals[i]||0;
+    const real=qaRealTime[i]||0;
+    const finalNoReason=qaFinalNoReason[i]||0;
+    if(!total)return false;
+    // If both segments exist, show the total only on the upper (Final Insp) segment.
+    if(real>0 && finalNoReason>0 && ctx.datasetIndex!==1)return false;
+    return {anchor:'end',align:'top',offset:4};
+  };
   const c1=$('chartByTeam');
   if(c1){
     if(_chartByTeam)_chartByTeam.destroy();
     _chartByTeam=new Chart(c1.getContext('2d'),{
       type:'bar',
-      data:{labels:teams,datasets:[{label:'QA Tablet',data:totals,backgroundColor:'#2E7BF0',borderRadius:4,maxBarThickness:56}]},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},plugins:{legend:{display:false},datalabels:Object.assign({anchor:'end',align:'top',offset:4},singleLabelOpts)},scales:{y:{beginAtZero:true,max:maxTotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
+      data:{labels:teams,datasets:[
+        {label:'Real-Time',data:qaRealTime,backgroundColor:'#2E7BF0',borderRadius:4,borderSkipped:false,maxBarThickness:56,
+          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#fff',font:{weight:'700',size:11},clamp:true,clip:false}},
+        {label:'Final Insp + no reason',data:qaFinalNoReason,backgroundColor:'#9CCBFF',borderRadius:4,borderSkipped:false,maxBarThickness:56,
+          datalabels:{display:c=>c.dataset.data[c.dataIndex]>0,anchor:qaSegmentLabel,align:qaSegmentLabel,formatter:(v)=>v,color:'#1B3A63',font:{weight:'700',size:11},clamp:true,clip:false}}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}},datalabels:{display:qaTotalLabel,formatter:(_,ctx)=>qaTotals[ctx.dataIndex]||0,anchor:'end',align:'top',offset:4,color:'#1B3A63',font:{weight:'700',size:12},clamp:true,clip:false}},scales:{y:{beginAtZero:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{grid:{display:false}}}}
     });
   }
   const c2=$('chartOwnTransfer');
