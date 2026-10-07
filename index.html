@@ -629,7 +629,7 @@ function renderLogs(){
   const cellsWrap=(x,d)=>{const key=x.code+'|'+d;const val=state.logGrid[key]??'';return `<td class="grid-cell"><input class="log-cell-input" data-code="${esc(x.code)}" data-date="${esc(d)}" value="${esc(val)}" placeholder="o"></td>`};
   body.innerHTML=tablets.length?tablets.map((x,i)=>{
     const cells=dates.map(d=>cellsWrap(x,d)).join('');
-    const reasonOptions=['Real-Time','Final Insp','-'].map(v=>`<option value="${esc(v)}" ${x.reason===v?'selected':''}>${esc(v)}</option>`).join('');
+    const reasonOptions=['Real-Time','Final Insp','AI','-'].map(v=>`<option value="${esc(v)}" ${x.reason===v?'selected':''}>${esc(v)}</option>`).join('');
     return `<tr><td>${i+1}</td><td>${esc(x.team)}</td><td class="code-cell">${esc(x.code)}</td><td><span class="chip ${x.status==='Transfer'?'out-chip':''}">${esc(x.status||'')}</span></td><td><select class="log-reason-select" data-id="${x.id}" ${x.reason?'disabled':''}><option value="" ${!x.reason?'selected':''}>Select</option>${reasonOptions}</select></td>${cells}</tr>`;
   }).join(''):`<tr class="empty-row"><td colspan="${5+dates.length}">No tablet records found.</td></tr>`;
   function applyLogCellValue(code,date,value){
