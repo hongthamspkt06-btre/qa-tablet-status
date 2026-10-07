@@ -345,8 +345,8 @@ input:disabled,select:disabled,textarea:disabled{background:#F2F4F6;color:var(--
               <div><label>Team</label><input type="text" id="fTeam" placeholder="Auto-detected from photo"></div>
               <div><label>Code</label><input type="text" id="fCode" placeholder="Auto-generated"></div>
               <div><label>Brand</label><select id="fBrand"><option value="">Select</option><option>Samsung</option><option>Lenovo</option></select></div>
-              <div><label>Model</label><select id="fModel"><option value="">Select</option><option>Galaxy Tab A (With S Pen / No Case)</option><option>Galaxy Tab A9 (No Pen / No Case)</option><option>Tab M11 (With Pen / With Case)</option></select></div>
-              <div><label>Purpose</label><select id="fPurpose"><option value="">Select</option><option>-</option><option>Carter's Final Insp</option><option>Target Final Insp</option><option>AEO Final Insp</option><option>QA MES Real-Time Insp</option></select></div>
+              <div><label>Model</label><select id="fModel"><option value="">Select</option><option>Galaxy Tab A (With S Pen / No Case)</option><option>Galaxy Tab A9 (No Pen / No Case)</option><option>Tab M11 (With Pen / With Case)</option><option>Galaxy A27 (Phone / No Case)</option></select></div>
+              <div><label>Purpose</label><select id="fPurpose"><option value="">Select</option><option>-</option><option>Carter's Final Insp</option><option>Target Final Insp</option><option>AEO Final Insp</option><option>QA MES Real-Time Insp</option><option>Lab AI Vision Shrinkage Tester</option></select></div>
             </div>
             <button class="btn-primary" id="btnAdd" style="width:100%;margin-top:16px">+ Add to list</button>
           </div>
@@ -799,7 +799,11 @@ function renderCharts(){
     const purpose=String(t.purpose||'').trim();
     return tm===team && (purpose==='-' || purpose==="Carter's Final Insp" || purpose==='AEO Final Insp' || purpose==='Target Final Insp');
   }).length);
-  const qaTotals=teams.map((_,i)=>qaRealTime[i]+qaFinalNoReason[i]);
+  const qaLab=teams.map(team=>(state.tablets||[]).filter(t=>{
+    const tm=(t.team||'').trim()||'—';
+    return tm===team && String(t.purpose||'').trim()==='Lab AI Vision Shrinkage Tester';
+  }).length);
+  const qaTotals=teams.map((_,i)=>qaRealTime[i]+qaFinalNoReason[i]+qaLab[i]);
   const own=teams.map(t=>(stats[t]&&stats[t].own)||0);
   const transfer=teams.map(t=>(stats[t]&&stats[t].transfer)||0);
   const beTransferred=teams.map(t=>(stats[t]&&stats[t].beTransferred)||0);
@@ -823,12 +827,11 @@ function renderCharts(){
   const qaTotalDisplay=(ctx)=>{
     const i=ctx.dataIndex;
     const total=qaTotals[i]||0;
-    const real=qaRealTime[i]||0;
-    const finalNoReason=qaFinalNoReason[i]||0;
     if(!total)return false;
-    // With two stacked segments, put the total on the upper Final Insp segment.
-    // With one segment, put the total on that segment.
-    return (real>0 && finalNoReason>0) ? ctx.datasetIndex===1 : ctx.dataset.data[i]>0;
+    // Put the total on the topmost non-zero stacked segment.
+    const segs=[qaRealTime[i]||0,qaFinalNoReason[i]||0,qaLab[i]||0];
+    let top=-1;segs.forEach((v,k)=>{if(v>0)top=k;});
+    return ctx.datasetIndex===top;
   };
   const qaValueLabels={
     display:c=>Number(c.dataset.data[c.dataIndex]||0)>0,
@@ -859,7 +862,8 @@ function renderCharts(){
       type:'bar',
       data:{labels:teams,datasets:[
         {label:'Real-Time',data:qaRealTime,backgroundColor:'#2E7BF0',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}},
-        {label:' Final Insp',data:qaFinalNoReason,backgroundColor:'rgb(118,147,60)',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}}
+        {label:' Final Insp',data:qaFinalNoReason,backgroundColor:'rgb(118,147,60)',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}},
+        {label:'Lab AI Vision',data:qaLab,backgroundColor:'#F28C28',borderRadius:4,borderSkipped:false,maxBarThickness:56,stack:'qa',datalabels:{labels:{value:qaValueLabels,total:qaTotalLabels}}}
       ]},
       options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:12}}}},scales:{y:{beginAtZero:true,stacked:true,max:maxQATotal+1,ticks:{precision:0,maxTicksLimit:4},grid:{color:'#EEF1F4'}},x:{stacked:true,grid:{display:false}}}}
     });
