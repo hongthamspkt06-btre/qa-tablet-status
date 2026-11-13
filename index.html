@@ -344,9 +344,9 @@ input:disabled,select:disabled,textarea:disabled{background:#F2F4F6;color:var(--
             <div class="form-grid">
               <div><label>Team</label><input type="text" id="fTeam" placeholder="Auto-detected from photo"></div>
               <div><label>Code</label><input type="text" id="fCode" placeholder="Auto-generated"></div>
-              <div><label>Brand</label><select id="fBrand"><option value="">Select</option><option>Samsung</option><option>Lenovo</option></select></div>
-              <div><label>Model</label><select id="fModel"><option value="">Select</option><option>Galaxy Tab A (With S Pen / No Case)</option><option>Galaxy Tab A9 (No Pen / No Case)</option><option>Tab M11 (With Pen / With Case)</option><option>Galaxy A27 (Phone / No Case)</option></select></div>
-              <div><label>Purpose</label><select id="fPurpose"><option value="">Select</option><option>-</option><option>Carter's Final Insp</option><option>Target Final Insp</option><option>AEO Final Insp</option><option>QA MES Real-Time Insp</option><option>Lab AI Vision Shrinkage Tester</option></select></div>
+              <div><label>Brand</label><select id="fBrand"><option value="">Select</option><option>Samsung</option><option>Lenovo</option><option>Xiaomi</option></select></div>
+              <div><label>Model</label><select id="fModel"><option value="">Select</option><option>Galaxy Tab A (With S Pen / No Case)</option><option>Galaxy Tab A9 (No Pen / No Case)</option><option>Tab M11 (With Pen / With Case)</option><option>Galaxy A27 (Phone / No Case)</option><option>Redmi Pad 2 (Tablet / No Pen / With Case)</option></select></div>
+              <div><label>Purpose</label><select id="fPurpose"><option value="">Select</option><option>-</option><option>Carter's Final Insp</option><option>Target Final Insp</option><option>AEO Final Insp</option><option>QA MES Real-Time Insp</option><option>Main Lab AI Vision</option><option>UQ Lab AI Vision</option><option>F3 AI Vision</option><option>F4 AI Vision</option></select></div>
             </div>
             <button class="btn-primary" id="btnAdd" style="width:100%;margin-top:16px">+ Add to list</button>
           </div>
@@ -801,7 +801,7 @@ function renderCharts(){
   }).length);
   const qaLab=teams.map(team=>(state.tablets||[]).filter(t=>{
     const tm=(t.team||'').trim()||'—';
-    return tm===team && String(t.purpose||'').trim()==='Lab AI Vision Shrinkage Tester';
+    return tm===team && ['Main Lab AI Vision','UQ Lab AI Vision','F3 AI Vision','F4 AI Vision','Lab AI Vision Shrinkage Tester'].includes(String(t.purpose||'').trim());
   }).length);
   const qaTotals=teams.map((_,i)=>qaRealTime[i]+qaFinalNoReason[i]+qaLab[i]);
   const own=teams.map(t=>(stats[t]&&stats[t].own)||0);
